@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ thống Phân loại Hoa Iris - AI Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: { colors: { techblue: '#1e3a8a', techcyan: '#06b6d4' } }
+            }
+        }
+    </script>
+    <style>
+        .hidden-section { display: none !important; }
+        .glass-panel { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-900 via-techblue to-slate-800 min-h-screen text-slate-800 font-sans">
+    <!-- HEADER -->
+    <header class="bg-white/10 backdrop-blur-md text-white p-4 shadow-lg flex justify-between items-center">
+        <div class="text-xl font-bold"><i class="fas fa-brain text-techcyan mr-2"></i> NGUYEN KHOA THONG MINH  </div>
+        <div id="user-info" class="hidden-section font-semibold text-techcyan">
+            <span id="welcome-text"></span>
+            <button onclick="logout()" class="ml-4 bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm transition">Đăng xuất</button>
+        </div>
+    </header>
+
+    <main class="container mx-auto p-4 md:p-8">
+        
+        <!-- SECTION 1: GIỚI THIỆU 3 LOÀI HOA (Luôn hiện ở màn hình ngoài) -->
+        <section id="intro-section" class="mb-12">
+            <div class="text-center text-white mb-8">
+                <h1 class="text-4xl font-extrabold mb-4">Nhận diện Giống Hoa Iris bằng SVM</h1>
+                <p class="text-lg text-slate-300">Hệ thống phân tích 4 đặc trưng hình thái để phân loại tự động 3 giống hoa</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Setosa -->
+                <div class="glass-panel rounded-xl p-6 shadow-2xl border-t-4 border-teal-400 text-center flex flex-col items-center transform transition duration-300 hover:scale-105">
+                    <img src="/static/setosa.jpg" alt="Iris Setosa" class="w-full h-48 object-contain bg-black rounded-lg mb-4 shadow-md">
+                    <h3 class="text-2xl font-bold text-teal-600 mb-2">Iris Setosa</h3>
+                    <p class="text-sm text-slate-600 mb-4">Đặc trưng hình thái tách biệt hoàn toàn. Rất dễ nhận diện với cánh hoa ngắn và nhỏ.</p>
+                </div>
+                <!-- Versicolor -->
+                <div class="glass-panel rounded-xl p-6 shadow-2xl border-t-4 border-orange-400 text-center flex flex-col items-center transform transition duration-300 hover:scale-105">
+                    <img src="/static/versicolor.jfif" alt="Iris Versicolor" class="w-full h-48 object-contain bg-black rounded-lg mb-4 shadow-md">
+                    <h3 class="text-2xl font-bold text-orange-600 mb-2">Iris Versicolor</h3>
+                    <p class="text-sm text-slate-600 mb-4">Kích thước trung bình, ranh giới phân loại có sự chồng lấn nhẹ với Virginica.</p>
+                </div>
+                <!-- Virginica -->
+                <div class="glass-panel rounded-xl p-6 shadow-2xl border-t-4 border-pink-500 text-center flex flex-col items-center transform transition duration-300 hover:scale-105">
+                    <img src="/static/images.jfif" alt="Iris Virginica" class="w-full h-48 object-contain bg-black rounded-lg mb-4 shadow-md">
+                    <h3 class="text-2xl font-bold text-pink-600 mb-2">Iris Virginica</h3>
+                    <p class="text-sm text-slate-600 mb-4">Kích thước đài và cánh hoa lớn nhất. Đòi hỏi mô hình SVM tinh chỉnh tốt để phân biệt.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 2: ĐĂNG NHẬP / ĐĂNG KÝ -->
+        <section id="auth-section" class="max-w-md mx-auto glass-panel rounded-2xl shadow-2xl overflow-hidden mt-8">
+            <div class="flex border-b border-slate-200">
+                <button id="tab-login" onclick="switchAuth('login')" class="w-1/2 py-4 font-bold text-techblue border-b-2 border-techblue bg-slate-50 transition">Đăng nhập</button>
+                <button id="tab-register" onclick="switchAuth('register')" class="w-1/2 py-4 font-bold text-slate-400 hover:text-techblue transition">Đăng ký</button>
+            </div>
+            <div class="p-8">
+                <div id="auth-error" class="hidden-section mb-4 text-red-600 bg-red-100 p-3 rounded text-sm text-center font-semibold"></div>
+                <div id="auth-success" class="hidden-section mb-4 text-green-600 bg-green-100 p-3 rounded text-sm text-center font-semibold"></div>
+                
+                <input type="text" id="username" placeholder="Tên đăng nhập" class="w-full mb-4 px-4 py-3 rounded-lg bg-slate-100 border-transparent focus:bg-white focus:border-techblue focus:ring-2 focus:ring-techblue transition">
+                <input type="password" id="password" placeholder="Mật khẩu" class="w-full mb-6 px-4 py-3 rounded-lg bg-slate-100 border-transparent focus:bg-white focus:border-techblue focus:ring-2 focus:ring-techblue transition">
+                
+                <button id="btn-submit-auth" onclick="handleAuth()" class="w-full bg-techblue hover:bg-blue-800 text-white font-bold py-3 rounded-lg transition transform hover:scale-[1.02]">VÀO HỆ THỐNG</button>
+            </div>
+        </section>
+
+        <!-- SECTION 3: DASHBOARD CHÍNH (Ẩn khi chưa đăng nhập) -->
+        <section id="dashboard-section" class="hidden-section">
+            
+            <!-- BỐ CỤC MỚI: BẢNG ĐIỀU KHIỂN (TRÁI) - KẾT QUẢ DỰ ĐOÁN (PHẢI) -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                
+                <!-- CỘT TRÁI: BẢNG ĐIỀU KHIỂN SVM -->
+                <div class="lg:col-span-2 glass-panel rounded-2xl p-8 shadow-2xl border-t-4 border-blue-500">
+                    <h2 class="text-2xl font-extrabold text-techblue mb-6 border-b pb-2"><i class="fas fa-cogs mr-2"></i> Bảng điều khiển SVM</h2>
+                    
+                    <div class="mb-6">
+                        <label class="block text-sm font-bold text-slate-700 mb-2">Chọn Thuật toán Kernel</label>
+                        <select id="algorithm" class="w-full p-3 rounded-lg bg-slate-100 border-slate-300 focus:ring-techblue focus:border-techblue">
+                            <option value="Linear">Linear</option>
+                            <option value="RBF" selected>RBF (Mặc định)</option>
+                            <option value="Poly">Polynomial</option>
+                            <option value="Sigmoid">Sigmoid</option>
+                        </select>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4 mb-8">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase">Dài đài hoa (cm)</label>
+                            <input type="number" id="sl" step="0.1" value="5.1" class="w-full p-3 mt-1 rounded-lg bg-slate-100 border-transparent focus:bg-white focus:ring-2 focus:ring-techblue transition">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase">Rộng đài hoa (cm)</label>
+                            <input type="number" id="sw" step="0.1" value="3.5" class="w-full p-3 mt-1 rounded-lg bg-slate-100 border-transparent focus:bg-white focus:ring-2 focus:ring-techblue transition">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase">Dài cánh hoa (cm)</label>
+                            <input type="number" id="pl" step="0.1" value="1.4" class="w-full p-3 mt-1 rounded-lg bg-slate-100 border-transparent focus:bg-white focus:ring-2 focus:ring-techblue transition">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase">Rộng cánh hoa (cm)</label>
+                            <input type="number" id="pw" step="0.1" value="0.2" class="w-full p-3 mt-1 rounded-lg bg-slate-100 border-transparent focus:bg-white focus:ring-2 focus:ring-techblue transition">
+                        </div>
+                    </div>
+
+                    <button onclick="makePrediction()" class="w-full bg-gradient-to-r from-techblue to-techcyan hover:from-blue-800 hover:to-cyan-600 text-white font-extrabold text-lg py-4 rounded-xl shadow-lg transition transform hover:scale-[1.02]">
+                        <i class="fas fa-bolt mr-2"></i> CHẠY DỰ ĐOÁN
+                    </button>
+                </div>
+
+                <!-- CỘT PHẢI: KẾT QUẢ DỰ ĐOÁN (Chuyên nghiệp) -->
+                <div class="lg:col-span-1 bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col">
+                    <div class="bg-gradient-to-r from-techblue to-techcyan p-4 border-b border-blue-800">
+                        <h2 class="text-lg font-bold text-white flex items-center">
+                            <i class="fas fa-microchip mr-2"></i> Kết quả phân tích
+                        </h2>
+                    </div>
+                    
+                    <div class="p-6 flex-grow flex flex-col relative bg-slate-50/50">
+                        <!-- Trạng thái chờ -->
+                        <div id="waiting-state" class="text-center text-slate-400 py-10 my-auto">
+                            <i class="fas fa-seedling text-5xl mb-3 opacity-30"></i>
+                            <p class="text-sm">Nhập thông số và bấm Chạy Dự Đoán để xem kết quả chi tiết.</p>
+                        </div>
+                        
+                        <!-- Kết quả hiển thị (Ẩn mặc định) -->
+                        <div id="result-display-area" class="hidden-section w-full flex-col h-full justify-between">
+                            <div>
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Loài dự đoán</span>
+                                    <span id="confidence-badge" class="px-2 py-1 bg-green-100 text-green-700 text-xs font-bold rounded">Thành công</span>
+                                </div>
+                                <div class="flex items-center mb-5 pb-4 border-b border-slate-200">
+                                    <div id="result-color-dot" class="w-4 h-4 rounded-full bg-blue-500 mr-3 animate-pulse shadow-[0_0_8px_rgba(59,130,246,0.8)]"></div>
+                                    <h3 id="result-flower-name" class="text-2xl font-extrabold text-slate-800 tracking-tight uppercase">IRIS</h3>
+                                </div>
+                                
+                                <p class="text-sm font-bold text-slate-600 mb-3">Thông số thu nhận:</p>
+                                <ul class="space-y-3 text-sm text-slate-600">
+                                    <li class="flex justify-between items-center"><span class="flex items-center"><i class="fas fa-ruler-vertical w-5 text-indigo-400"></i> Dài đài hoa:</span> <strong id="res-sl" class="bg-white border border-slate-200 shadow-sm px-2 py-0.5 rounded text-indigo-700">0 cm</strong></li>
+                                    <li class="flex justify-between items-center"><span class="flex items-center"><i class="fas fa-ruler-horizontal w-5 text-indigo-400"></i> Rộng đài hoa:</span> <strong id="res-sw" class="bg-white border border-slate-200 shadow-sm px-2 py-0.5 rounded text-indigo-700">0 cm</strong></li>
+                                    <li class="flex justify-between items-center"><span class="flex items-center"><i class="fas fa-leaf w-5 text-emerald-400"></i> Dài cánh hoa:</span> <strong id="res-pl" class="bg-white border border-slate-200 shadow-sm px-2 py-0.5 rounded text-emerald-700">0 cm</strong></li>
+                                    <li class="flex justify-between items-center"><span class="flex items-center"><i class="fas fa-seedling w-5 text-emerald-400"></i> Rộng cánh hoa:</span> <strong id="res-pw" class="bg-white border border-slate-200 shadow-sm px-2 py-0.5 rounded text-emerald-700">0 cm</strong></li>
+                                </ul>
+                            </div>
+                            
+                            <div class="mt-6 p-4 bg-white rounded-lg border border-slate-200 shadow-sm">
+                                <p class="text-xs font-bold text-slate-700 mb-1">Đặc điểm nhận dạng:</p>
+                                <p class="text-xs text-slate-500 leading-relaxed" id="result-desc">Mô tả đặc trưng...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+<!-- HÀNG GIỮA: SO SÁNH ĐẶC TRƯNG (MỚI THÊM) -->
+            <div class="glass-panel rounded-2xl p-8 shadow-2xl mb-8 border-t-4 border-teal-400">
+                <div class="flex justify-between items-center mb-6 border-b pb-2">
+                    <h2 class="text-2xl font-extrabold text-slate-800 flex items-center">
+                        <i class="fas fa-balance-scale text-teal-600 mr-2"></i> Bảng So sánh Đặc trưng Phân loại (Trung bình)
+                    </h2>
+                    <span class="text-sm font-bold text-slate-400 bg-slate-100 px-3 py-1 rounded-full">Dữ liệu tham chiếu</span>
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="w-full text-center border-collapse">
+                        <thead>
+                            <tr class="bg-slate-100 text-slate-700 text-sm uppercase tracking-wide">
+                                <th class="p-4 rounded-tl-lg text-left font-extrabold">Đặc trưng sinh học</th>
+                                <th class="p-4 text-teal-700 font-extrabold border-l border-white">Iris Setosa</th>
+                                <th class="p-4 text-orange-700 font-extrabold border-l border-white">Iris Versicolor</th>
+                                <th class="p-4 text-pink-700 font-extrabold rounded-tr-lg border-l border-white">Iris Virginica</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-sm font-medium">
+                            <tr class="border-b border-slate-100 hover:bg-slate-50 transition">
+                                <td class="p-4 text-left text-slate-600"><i class="fas fa-ruler-vertical mr-2 text-indigo-400"></i> Chiều dài đài hoa</td>
+                                <td class="p-4 text-slate-700 bg-teal-50/30">~ 5.0 cm</td>
+                                <td class="p-4 text-slate-700 bg-orange-50/30">~ 5.9 cm</td>
+                                <td class="p-4 text-pink-700 font-bold bg-pink-50/50">~ 6.5 cm (Lớn nhất)</td>
+                            </tr>
+                            <tr class="border-b border-slate-100 hover:bg-slate-50 transition">
+                                <td class="p-4 text-left text-slate-600"><i class="fas fa-ruler-horizontal mr-2 text-indigo-400"></i> Chiều rộng đài hoa</td>
+                                <td class="p-4 text-teal-700 font-bold bg-teal-50/50">~ 3.4 cm (Lớn nhất)</td>
+                                <td class="p-4 text-slate-700 bg-orange-50/30">~ 2.7 cm</td>
+                                <td class="p-4 text-slate-700 bg-pink-50/30">~ 2.9 cm</td>
+                            </tr>
+                            <tr class="border-b border-slate-100 hover:bg-slate-50 transition">
+                                <td class="p-4 text-left text-slate-600"><i class="fas fa-leaf mr-2 text-emerald-400"></i> Chiều dài cánh hoa</td>
+                                <td class="p-4 text-teal-700 font-bold bg-teal-50/50">~ 1.5 cm (Nhỏ nhất)</td>
+                                <td class="p-4 text-slate-700 bg-orange-50/30">~ 4.2 cm</td>
+                                <td class="p-4 text-pink-700 font-bold bg-pink-50/50">~ 5.5 cm (Lớn nhất)</td>
+                            </tr>
+                            <tr class="hover:bg-slate-50 transition">
+                                <td class="p-4 text-left text-slate-600 rounded-bl-lg"><i class="fas fa-seedling mr-2 text-emerald-400"></i> Chiều rộng cánh hoa</td>
+                                <td class="p-4 text-teal-700 font-bold bg-teal-50/50">~ 0.2 cm (Nhỏ nhất)</td>
+                                <td class="p-4 text-slate-700 bg-orange-50/30">~ 1.3 cm</td>
+                                <td class="p-4 text-pink-700 font-bold bg-pink-50/50 rounded-br-lg">~ 2.0 cm (Lớn nhất)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="mt-4 text-xs text-slate-400 italic text-right">
+                    * Thuật toán SVM sẽ dựa vào các khác biệt định lượng này để vẽ siêu phẳng (Hyperplane) phân loại.
+                </div>
+            </div>
+
+            <!-- HÀNG DƯỚI CÙNG: BẢNG LỊCH SỬ -->
+            <div class="glass-panel rounded-2xl p-8 shadow-2xl flex flex-col border-t-4 border-indigo-400">
+                <div class="flex justify-between items-center mb-6 border-b pb-2">
+                    <h2 class="text-2xl font-extrabold text-slate-800 flex items-center">
+                        <i class="fas fa-history text-indigo-600 mr-2"></i> Lịch sử dự đoán
+                    </h2>
+                    <button onclick="loadHistory()" class="text-indigo-600 hover:text-indigo-800 font-bold text-sm bg-indigo-50 px-3 py-1 rounded transition"><i class="fas fa-sync-alt mr-1"></i> Làm mới</button>
+                </div>
+                
+                <div class="overflow-x-auto flex-grow">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-100 text-slate-600 text-sm">
+                                <th class="p-3 rounded-tl-lg">ID</th>
+                                <th class="p-3">Kernel</th>
+                                <th class="p-3">Thông số (SL,SW,PL,PW)</th>
+                                <th class="p-3 rounded-tr-lg">Kết quả</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-table-body" class="text-sm">
+                            <!-- Dữ liệu JS đổ vào đây -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </section>
+    </main>
+
+    <!-- KỊCH BẢN XỬ LÝ ỨNG DỤNG -->
+    <script>
+        let currentAuthMode = 'login';
+        let currentUser = null; // Chứa { id: ..., username: ... }
+
+        // 1. Chuyển đổi Tab Đăng nhập / Đăng ký
+        function switchAuth(mode) {
+            currentAuthMode = mode;
+            document.getElementById('auth-error').classList.add('hidden-section');
+            document.getElementById('auth-success').classList.add('hidden-section');
+            
+            const btnLogin = document.getElementById('tab-login');
+            const btnRegister = document.getElementById('tab-register');
+            const btnSubmit = document.getElementById('btn-submit-auth');
+
+            if (mode === 'login') {
+                btnLogin.className = "w-1/2 py-4 font-bold text-techblue border-b-2 border-techblue bg-slate-50 transition";
+                btnRegister.className = "w-1/2 py-4 font-bold text-slate-400 hover:text-techblue transition border-b border-slate-200";
+                btnSubmit.innerText = "ĐĂNG NHẬP";
+            } else {
+                btnRegister.className = "w-1/2 py-4 font-bold text-techblue border-b-2 border-techblue bg-slate-50 transition";
+                btnLogin.className = "w-1/2 py-4 font-bold text-slate-400 hover:text-techblue transition border-b border-slate-200";
+                btnSubmit.innerText = "TẠO TÀI KHOẢN MỚI";
+            }
+        }
+
+        // 2. Xử lý Gọi API Đăng nhập / Đăng ký
+        async function handleAuth() {
+            const user = document.getElementById('username').value;
+            const pass = document.getElementById('password').value;
+            const errBox = document.getElementById('auth-error');
+            const succBox = document.getElementById('auth-success');
+            
+            if (!user || !pass) {
+                errBox.innerText = "Vui lòng nhập đủ tài khoản và mật khẩu!";
+                errBox.classList.remove('hidden-section');
+                return;
+            }
+
+            const endpoint = currentAuthMode === 'login' ? '/login' : '/register';
+            try {
+                const res = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: user, password: pass })
+                });
+                const data = await res.json();
+
+                if (!res.ok) {
+                    errBox.innerText = data.detail;
+                    errBox.classList.remove('hidden-section');
+                    succBox.classList.add('hidden-section');
+                } else {
+                    errBox.classList.add('hidden-section');
+                    succBox.innerText = data.message;
+                    succBox.classList.remove('hidden-section');
+                    
+                    if (currentAuthMode === 'login') {
+                        currentUser = { id: data.user_id, username: user };
+                        setTimeout(showDashboard, 1000);
+                    } else {
+                        setTimeout(() => switchAuth('login'), 1500);
+                    }
+                }
+            } catch (error) {
+                errBox.innerText = "Lỗi kết nối đến máy chủ API!";
+                errBox.classList.remove('hidden-section');
+            }
+        }
+
+        // 3. Hiển thị Dashboard
+        function showDashboard() {
+            document.getElementById('intro-section').classList.add('hidden-section');
+            document.getElementById('auth-section').classList.add('hidden-section');
+            
+            document.getElementById('dashboard-section').classList.remove('hidden-section');
+            document.getElementById('user-info').classList.remove('hidden-section');
+            
+            document.getElementById('welcome-text').innerText = "Xin chào, " + currentUser.username.toUpperCase();
+            loadHistory();
+        }
+
+        // 4. Đăng xuất
+        function logout() {
+            currentUser = null;
+            document.getElementById('username').value = "";
+            document.getElementById('password').value = "";
+            
+            document.getElementById('dashboard-section').classList.add('hidden-section');
+            document.getElementById('user-info').classList.add('hidden-section');
+            
+            document.getElementById('intro-section').classList.remove('hidden-section');
+            document.getElementById('auth-section').classList.remove('hidden-section');
+            switchAuth('login');
+            
+            // Đưa bảng kết quả về trạng thái chờ
+            document.getElementById('waiting-state').classList.remove('hidden-section');
+            document.getElementById('result-display-area').classList.add('hidden-section');
+        }
+
+        // 5. Dự đoán và Hiển thị theo thiết kế mới
+        async function makePrediction() {
+            const payload = {
+                user_id: currentUser.id,
+                algorithm: document.getElementById('algorithm').value,
+                sepal_length: parseFloat(document.getElementById('sl').value),
+                sepal_width: parseFloat(document.getElementById('sw').value),
+                petal_length: parseFloat(document.getElementById('pl').value),
+                petal_width: parseFloat(document.getElementById('pw').value)
+            };
+
+            try {
+                const res = await fetch('/predict', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+
+                if (res.ok) {
+                    // Ẩn bảng chờ, hiện bảng thông tin
+                    document.getElementById('waiting-state').classList.add('hidden-section');
+                    document.getElementById('result-display-area').classList.remove('hidden-section');
+
+                    const pred = data.prediction.toUpperCase();
+                    document.getElementById('result-flower-name').innerText = pred;
+
+                    // Đổ thông số
+                    document.getElementById('res-sl').innerText = document.getElementById('sl').value + ' cm';
+                    document.getElementById('res-sw').innerText = document.getElementById('sw').value + ' cm';
+                    document.getElementById('res-pl').innerText = document.getElementById('pl').value + ' cm';
+                    document.getElementById('res-pw').innerText = document.getElementById('pw').value + ' cm';
+
+                    // Tuỳ chỉnh màu sắc & mô tả
+                    const dot = document.getElementById('result-color-dot');
+                    const desc = document.getElementById('result-desc');
+                    const badge = document.getElementById('confidence-badge');
+
+                    if (pred.includes("SETOSA")) {
+                        dot.className = 'w-4 h-4 rounded-full bg-teal-400 mr-3 animate-pulse shadow-[0_0_8px_rgba(45,212,191,0.8)]';
+                        desc.innerText = 'Đặc trưng hình thái tách biệt hoàn toàn. Rất dễ nhận diện với đài hoa rộng và cánh hoa ngắn.';
+                        badge.className = 'px-2 py-1 bg-teal-100 text-teal-700 text-xs font-bold rounded';
+                    } else if (pred.includes("VERSICOLOR")) {
+                        dot.className = 'w-4 h-4 rounded-full bg-orange-400 mr-3 animate-pulse shadow-[0_0_8px_rgba(251,146,60,0.8)]';
+                        desc.innerText = 'Kích thước trung bình, ranh giới phân loại có sự chồng lấn nhẹ với Virginica.';
+                        badge.className = 'px-2 py-1 bg-orange-100 text-orange-700 text-xs font-bold rounded';
+                    } else {
+                        dot.className = 'w-4 h-4 rounded-full bg-pink-500 mr-3 animate-pulse shadow-[0_0_8px_rgba(236,72,153,0.8)]';
+                        desc.innerText = 'Kích thước đài và cánh hoa lớn nhất. Đòi hỏi mô hình SVM tinh chỉnh tham số tốt để phân biệt.';
+                        badge.className = 'px-2 py-1 bg-pink-100 text-pink-700 text-xs font-bold rounded';
+                    }
+
+                    loadHistory();
+                } else {
+                    alert("Lỗi: " + data.detail);
+                }
+            } catch (error) {
+                alert("Lỗi kết nối máy chủ");
+            }
+        }
+
+        // 6. Tải Lịch sử
+        async function loadHistory() {
+            try {
+                const res = await fetch('/history');
+                const data = await res.json();
+                
+                const tbody = document.getElementById('history-table-body');
+                tbody.innerHTML = "";
+                
+                data.history.forEach(item => {
+                    let colorClass = "text-teal-600 bg-teal-50 border border-teal-100";
+                    if (item.prediction.includes("Versicolor")) colorClass = "text-orange-600 bg-orange-50 border border-orange-100";
+                    if (item.prediction.includes("Virginica")) colorClass = "text-pink-600 bg-pink-50 border border-pink-100";
+
+                    const tr = document.createElement('tr');
+                    tr.className = "border-b border-slate-100 hover:bg-slate-50 transition";
+                    tr.innerHTML = `
+                        <td class="p-3 text-slate-500 font-medium">#${item.id}</td>
+                        <td class="p-3 font-bold text-indigo-700">${item.algorithm}</td>
+                        <td class="p-3 text-slate-600 tracking-wide">${item.sepal_length}, ${item.sepal_width}, ${item.petal_length}, ${item.petal_width}</td>
+                        <td class="p-3">
+                            <span class="px-2 py-1 rounded text-xs font-bold shadow-sm ${colorClass}">${item.prediction}</span>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (error) {
+                console.error("Lỗi tải lịch sử");
+            }
+        }
+    </script>
+</body>
+</html>
